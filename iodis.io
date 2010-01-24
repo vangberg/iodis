@@ -1,19 +1,17 @@
 Iodis := Object clone do(
+  host  := "localhost"
+  port  := 6379
+  debug := false
+
   connect := method(
-    self socket := Socket clone setHost("localhost") setPort(6379) connect
+    self socket := Socket clone setHost(host) setPort(port) connect
     self
   )
 
   writeData := method(data,
+    if(debug, ("S: " .. data) print)
     socket streamWrite(data)
-    socket streamReadNextChunk
-    processResponse
-  )
-
-  processResponse := method(
-    response := readReply
-    socket readBuffer empty
-    response
+    readReply
   )
 
   readReply := method(
@@ -47,6 +45,53 @@ Iodis := Object clone do(
     writeData(data)
   )
 
+  flushdb := method(inlineCommand("FLUSHDB"))
+
+  exists := method(key,
+    r := inlineCommand("EXISTS", key)
+    if(r == 1, true, false)
+  )
+
+  del := method(
+    inlineCommand("DEL", call evalArgs)
+  )
+
+  keys := method(pattern,
+    inlineCommand("KEYS", pattern) split(" ")
+  )
+
+  randomKey := method(
+    inlineCommand("RANDOMKEY")
+  )
+
+  rename := method(old, new,
+    inlineCommand("RENAME", list(old, new))
+  )
+
+  renameNx := method(old, new,
+    r := inlineCommand("RENAMENX", list(old, new))
+    if(r == 1, true, false)
+  )
+
+  dbSize := method(
+    inlineCommand("DBSIZE")
+  )
+  
+  expire := method(key, seconds,
+    r := inlineCommand("EXPIRE", list(key, seconds))
+    if(r == 1, true, false)
+  )
+
+  expireAt := method(key, unix,
+    r := inlineCommand("EXPIREAT", list(key, unix))
+    if(r == 1, true, false)
+  )
+
+  ttl := method(key,
+    r := inlineCommand("TTL", key)
+    if(r < 0, nil, r)
+  )
+
   set := method(key, value, bulkCommand("SET", key, value)) 
   get := method(key, inlineCommand("GET", key))
   mget := method(keys, inlineCommand("MGET", keys))
@@ -61,35 +106,3 @@ Iodis := Object clone do(
 
   ping := method(inlineCommand("PING"))
 )
-
-i := Iodis clone connect
-i set("y0", "hey") print
-"\n" print
-i set("broke", "hephep") print
-"\n" print
-i get("y0") print
-"\n" print
-"\n" print
-i mget(list("y0", "broke")) foreach(x,x print)
-
-"\n" print
-"lol\n" print
-i get("aksldfhasdkfhasdf") type print
-
-"\n" print
-i mget(list("aisudfhaisdfh", "y0")) print
-
-"\n" print
-i lpush("stupidz", "yep") print
-"\n" print
-i lpush("stupidz", "eehhh") print
-"\nlrange exist:\n" print
-i lrange("stupidz", 0, -1) print
-"\nlrange non-exist:\n" print
-i lrange("stupsadfidz", 0, -1) print
-
-"\n" print
-i lpush("thisisalmost","haha")
-i rpop("thisisalmost") print
-"\nlrange empty:\n" print
-i lrange("thisisalmost", 0, -1) print
