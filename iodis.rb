@@ -11,18 +11,26 @@ Iodis := Object clone do(
   )
 
   processResponse := method(
+    response := readReply
+    socket readBuffer empty
+    response
+  )
+
+  readReply := method(
     responseType  := socket readBytes(1)
     line          := socket readUntilSeq("\r\n")
 
-    response := responseType switch(
-      "+", line,
-      ":", line asNumber,
-      "$", socket readBytes(line asNumber)
-    ) clone
-
-    socket readBuffer empty
-
-    response
+    responseType switch(
+      "+",  line,
+      ":",  line asNumber,
+      "$",  socket readBytes(line asNumber) clone,
+      "*",  values := list()
+            line asNumber repeat(
+              values push(readReply)
+              socket readBytes(2)
+            )
+            values
+    ) 
   )
 
   inlineCommand := method(command, args,
@@ -38,6 +46,7 @@ Iodis := Object clone do(
 
   set := method(key, value, bulkCommand("SET", key, value)) 
   get := method(key, inlineCommand("GET", key))
+  mget := method(keys, inlineCommand("MGET", keys))
   incr := method(key, inlineCommand("INCR", key))
   decr := method(key, inlineCommand("DECR", key))
 
@@ -45,8 +54,11 @@ Iodis := Object clone do(
 )
 
 i := Iodis clone connect
-i ping print
-i get("foo") print
-i incr("catz0r") print
-i incr("catz0r") print
-i incr("catz0r") print
+i set("y0", "hey") print
+"\n" print
+i set("broke", "hephep") print
+"\n" print
+i get("y0") print
+"\n" print
+"\n" print
+i mget(list("y0", "broke")) foreach(x,x print)
