@@ -1,6 +1,6 @@
 iodis ~ a redis client library for io
 
-usage –
+usage ~
   $ io
   i := Iodis clone connect
   i set("foo", "bar") ==> OK
