@@ -9,8 +9,7 @@ Iodis := Object clone do(
 
   connect := method(
     self socket := Socket clone setHost(host) setPort(port) connect
-    if(password,
-      callCommand("auth", password))
+    if(password, callCommand("auth", password))
     self
   )
 
