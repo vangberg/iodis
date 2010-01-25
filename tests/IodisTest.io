@@ -131,4 +131,24 @@ IodisTest := UnitTest clone do(
 
     assertFalse(redis msetnx("foo", "new value", "thirdkey", "blabla"))
   )
+
+  testIncr := method(
+    redis set("counter", 1)
+    assertEquals(2, redis incr("counter"))
+  )
+
+  testIncrBy := method(
+    redis set("counter", 1)
+    assertEquals(5, redis incrby("counter", 4))
+  )
+
+  testDecr := method(
+    redis set("counter", 5)
+    assertEquals(4, redis decr("counter"))
+  )
+
+  testDecrBy := method(
+    redis set("counter", 5)
+    assertEquals(1, redis decrby("counter", 4))
+  )
 )

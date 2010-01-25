@@ -17,7 +17,7 @@ Iodis := Object clone do(
     if (inlineCommands contains(command)) then(
       data := args prepend(rawCommand) join(" ") .. "\r\n"
     ) elseif(bulkCommands contains(command)) then(
-      stream := args pop
+      stream := args pop asString
       args = args append(stream size) join(" ")
 
       data := "#{rawCommand} #{args}\r\n#{stream}\r\n" interpolate
@@ -37,7 +37,7 @@ Iodis := Object clone do(
     "exists", "del", "keys", "randomkey", "rename", "renamenx", "dbsize", 
     "expire", "expireat", "ttl", "select", "move", "flushdb", "flushall",
 
-    "get", "mget"
+    "get", "mget", "incr", "incrby", "decr", "decrby"
   )
 
   bulkCommands := list(
