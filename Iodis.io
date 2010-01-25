@@ -14,29 +14,31 @@ Iodis := Object clone do(
   )
 
   callCommand := method(
-    args        := call evalArgs flatten
-    command     := args removeFirst
+    args      := call evalArgs flatten
+    command   := args removeFirst
+    raw       := formatCommand(command, args)
+
+    if(debug, ("C: " .. raw) print)
+    socket streamWrite(raw)
+    replyProcessor perform(command) call(readReply)
+  )
+
+  formatCommand := method(command, args,
     rawCommand  := command asUppercase
 
     if (inlineCommands contains(command)) then(
-      data := args prepend(rawCommand) join(" ") .. "\r\n"
+      return args prepend(rawCommand) join(" ") .. "\r\n"
     ) elseif(bulkCommands contains(command)) then(
       stream := args pop asString
       args = args append(stream size) join(" ")
 
-      data := "#{rawCommand} #{args}\r\n#{stream}\r\n" interpolate
+      return "#{rawCommand} #{args}\r\n#{stream}\r\n" interpolate
     ) elseif(multiBulkCommands contains(command)) then(
       args prepend(rawCommand)
       bulk := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
 
-      data := "*#{args size}\r\n#{bulk}" interpolate
+      return "*#{args size}\r\n#{bulk}" interpolate
     )
-
-    if(debug, ("C: " .. data) print)
-
-    socket streamWrite(data)
-
-    replyProcessor perform(command) call(readReply)
   )
 
   readReply := method(
