@@ -106,8 +106,8 @@ Iodis := Object clone do(
   list(inlineCommands, bulkCommands, multiBulkCommands) flatten foreach(command,
     if(hasSlot(command), continue)
 
-    newSlot(command, doString(
-      "method(callCommand(\"" .. command .. "\", call evalArgs))"
+    newSlot(command, method(
+      callCommand(call message name, call evalArgs)
     ))
   )
 
