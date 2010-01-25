@@ -30,10 +30,7 @@ Iodis := Object clone do(
 
     socket streamWrite(data)
 
-    reply := readReply
-    if (replyProcessor hasSlot(command),
-        replyProcessor getSlot(command) call(reply),
-        reply)
+    replyProcessor perform(command) call(readReply)
   )
 
   inlineCommands := list(
@@ -93,6 +90,7 @@ Iodis := Object clone do(
     move      := Boolean
     setnx     := Boolean
     msetnx    := Boolean
-  )
 
+    forward := method(block(r, r))
+  )
 )
