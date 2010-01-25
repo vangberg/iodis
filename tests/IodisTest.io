@@ -120,10 +120,15 @@ IodisTest := UnitTest clone do(
   )
 
   testMset := method(
-    redis set("key1", "first value")
     redis mset("key1", "new value", "key2", "some value")
 
     assertEquals("new value", redis get("key1"))
     assertEquals("some value", redis get("key2"))
+  )
+
+  testMsetnx := method(
+    assertTrue(redis msetnx("foo", "value", "bar", "other value"))
+
+    assertFalse(redis msetnx("foo", "new value", "thirdkey", "blabla"))
   )
 )

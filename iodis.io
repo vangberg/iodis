@@ -34,7 +34,7 @@ Iodis := Object clone do(
   )
 
   multiBulkCommands := list(
-    "mset"
+    "mset", "msetnx"
   )
 
   inlineCommands foreach(command,
@@ -108,6 +108,7 @@ Iodis := Object clone do(
     ttl       := block(r, if(r < 0, nil, r))
     move      := Boolean
     setnx     := Boolean
+    msetnx    := Boolean
   )
 
 )
