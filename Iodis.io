@@ -31,7 +31,7 @@ Iodis := Object clone do(
         rawCommand .. " " .. args join(" ") .. "\r\n",
       "bulk", 
         stream  := args pop asString
-        args    := args join (" ")
+        args    := args join(" ")
         "#{rawCommand} #{args} #{stream size}\r\n#{stream}\r\n" interpolate,
       "multibulk",
         args prepend(rawCommand)
