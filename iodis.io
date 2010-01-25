@@ -8,11 +8,25 @@ Iodis := Object clone do(
     self
   )
 
-  callCommand := method(command, args, stream,
-    data := list(command, args) flatten remove(nil) join(" ") .. "\r\n"
-    if(stream, data = data .. stream)
+  callCommand := method(
+    args    := call evalArgs flatten
+    command := args removeFirst
 
-    if(debug, (list("S:", data, "\n") join(" ") print))
+    if (inlineCommands contains(command)) then(
+      data := list(command, args) flatten remove(nil) join(" ") .. "\r\n"
+    ) elseif(bulkCommands contains(command)) then(
+      stream := args pop
+      args = list(args, stream size) flatten join(" ")
+
+      data := "#{command} #{args}\r\n#{stream}\r\n" interpolate
+    ) elseif(multiBulkCommands contains(command)) then(
+      args prepend(command)
+      bulk := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
+
+      data := "*#{args size}\r\n#{bulk}" interpolate
+    )
+
+    if(debug, ("S: #{data}\n" interpolate print))
 
     socket streamWrite(data)
 
@@ -37,39 +51,9 @@ Iodis := Object clone do(
     "mset", "msetnx"
   )
 
-  inlineCommands foreach(command,
+  list(inlineCommands, bulkCommands, multiBulkCommands) flatten foreach(command,
     newSlot(command, doString(
       "method(callCommand(\"" .. command .. "\", call evalArgs))"
-    ))
-  )
-
-  bulkCommand := method(
-    args    := call evalArgs flatten
-    command := args removeFirst
-    stream  := args pop
-
-    args = list(args, stream size) flatten join(" ")
-
-    callCommand(command, args, stream .. "\r\n")
-  )
-
-  bulkCommands foreach(command,
-    newSlot(command, doString(
-      "method(bulkCommand(\"" .. command .. "\", call evalArgs))"
-    ))
-  )
-
-  multiBulkCommand := method(
-    args    := call evalArgs flatten
-    command := "*" .. args size
-    data    := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
-
-    callCommand(command, nil, data)
-  )
-
-  multiBulkCommands foreach(command,
-    newSlot(command, doString(
-      "method(multiBulkCommand(\"" .. command .. "\", call evalArgs))"
     ))
   )
 
