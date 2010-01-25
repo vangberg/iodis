@@ -132,8 +132,8 @@ Iodis := Object clone do(
     srem      := Boolean
     smove     := Boolean
     sismember := Boolean
-
     type      := block(r, r)
+
     forward   := block(r, r)
   )
 )
