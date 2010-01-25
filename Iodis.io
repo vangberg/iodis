@@ -134,6 +134,6 @@ Iodis := Object clone do(
     sismember := Boolean
 
     type      := block(r, r)
-    forward   := method(block(r, r))
+    forward   := block(r, r)
   )
 )
