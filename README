@@ -13,9 +13,11 @@ tests ~
   $ io tests/run.io
 
 beware ~
-  iodis doesn't handle server timeouts.
-  also, this is my first io code, suggestions
-  for improvements are more than welcome.
+  iodis doesn't handle server timeouts. missing
+  commands for zsets, sorting & persistence /
+  remote server control. also, this is my first
+  io code, suggestions for improvements are more
+  than welcome.
 
 credits ~
   dekorte / io, antirez / redis

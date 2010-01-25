@@ -67,7 +67,7 @@ Iodis := Object clone do(
   inlineCommands := list(
     "auth", "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
     "dbsize", "expire", "expireat", "ttl", "select", "move", "flushdb",
-    "flushall",
+    "flushall", "quit",
 
     "get", "mget", "incr", "incrby", "decr", "decrby",
 
