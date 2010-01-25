@@ -1,5 +1,5 @@
 Iodis := Object clone do(
-  version := "0.1"
+  version   := "0.1"
 
   debug     ::= false
 
@@ -40,6 +40,31 @@ Iodis := Object clone do(
     replyProcessor perform(command) call(readReply)
   )
 
+  readReply := method(
+    response      := socket readUntilSeq("\r\n")
+    responseType  := response exSlice(0, 1)
+    line          := response exSlice(1)
+
+    responseType switch(
+      "+",  line,
+      ":",  line asNumber,
+      "$",  line asNumber compare(0) switch(
+                -1, nil,
+                 0, socket readBytes(2)
+                    "",
+                 1, data := socket readBytes(line asNumber)
+                    socket readBytes(2)
+                    data),
+      "*",  if (line asNumber < 0, nil,
+                values := list()
+                line asNumber repeat(
+                  values push(readReply)
+                )
+                values),
+      "-", Exception raise("-" .. line)
+    ) 
+  )
+
   inlineCommands := list(
     "auth", "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
     "dbsize", "expire", "expireat", "ttl", "select", "move", "flushdb",
@@ -75,30 +100,6 @@ Iodis := Object clone do(
 
   typeOf := method(key,
     callCommand("type", key)
-  )
-
-  readReply := method(
-    responseType  := socket readBytes(1)
-    line          := socket readUntilSeq("\r\n")
-
-    responseType switch(
-      "+",  line,
-      ":",  line asNumber,
-      "$",  line asNumber compare(0) switch(
-                -1, nil,
-                 0, socket readBytes(2)
-                    "",
-                 1, data := socket readBytes(line asNumber)
-                    socket readBytes(2)
-                    data),
-      "*",  if (line asNumber < 0, nil,
-                values := list()
-                line asNumber repeat(
-                  values push(readReply)
-                )
-                values),
-      "-", Exception raise("-" .. line)
-    ) 
   )
 
   replyProcessor := Object clone do(
