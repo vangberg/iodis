@@ -13,10 +13,10 @@ Iodis := Object clone do(
     command := args removeFirst
 
     if (inlineCommands contains(command)) then(
-      data := list(command, args) flatten remove(nil) join(" ") .. "\r\n"
+      data := args prepend(command) join(" ") .. "\r\n"
     ) elseif(bulkCommands contains(command)) then(
       stream := args pop
-      args = list(args, stream size) flatten join(" ")
+      args = args append(stream size) join(" ")
 
       data := "#{command} #{args}\r\n#{stream}\r\n" interpolate
     ) elseif(multiBulkCommands contains(command)) then(
@@ -25,8 +25,6 @@ Iodis := Object clone do(
 
       data := "*#{args size}\r\n#{bulk}" interpolate
     )
-
-    if(debug, ("S: #{data}\n" interpolate print))
 
     socket streamWrite(data)
 
