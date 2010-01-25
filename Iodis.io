@@ -26,19 +26,26 @@ Iodis := Object clone do(
   formatCommand := method(command, args,
     rawCommand  := command asUppercase
 
-    if (inlineCommands contains(command)) then(
-      return args prepend(rawCommand) join(" ") .. "\r\n"
-    ) elseif(bulkCommands contains(command)) then(
-      stream := args pop asString
-      args = args append(stream size) join(" ")
-
-      return "#{rawCommand} #{args}\r\n#{stream}\r\n" interpolate
-    ) elseif(multiBulkCommands contains(command)) then(
-      args prepend(rawCommand)
-      bulk := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
-
-      return "*#{args size}\r\n#{bulk}" interpolate
+    commandType(command) switch(
+      "inline",
+        rawCommand .. " " .. args join(" ") .. "\r\n",
+      "bulk", 
+        stream  := args pop asString
+        args    := args join (" ")
+        "#{rawCommand} #{args} #{stream size}\r\n#{stream}\r\n" interpolate,
+      "multibulk",
+        args prepend(rawCommand)
+        bulk := args map(arg,
+          "$#{arg size}\r\n#{arg}\r\n" interpolate
+        ) join
+        "*#{args size}\r\n#{bulk}" interpolate
     )
+  )
+
+  commandType := method(command,
+    if (inlineCommands    contains(command), return "inline")
+    if (bulkCommands      contains(command), return "bulk")
+    if (multiBulkCommands contains(command), return "multibulk")
   )
 
   readReply := method(
