@@ -21,6 +21,33 @@ Iodis := Object clone do(
         reply)
   )
 
+  inlineCommands := list("flushdb", "exists", "del", "keys", "randomkey",
+    "rename", "renamenx", "dbsize", "expire", "expireat", "ttl", "get")
+
+  inlineCommands foreach(command,
+    newSlot(command, doString(
+      "method(callCommand(\"" .. command .. "\", call evalArgs))"
+    ))
+  )
+
+  bulkCommand := method(
+    args    := call evalArgs flatten
+    command := args removeFirst
+    stream  := args pop
+
+    data := list(args, stream size) flatten join(" ") .. "\r\n"
+    data = data .. stream
+    callCommand(command, data)
+  )
+
+  bulkCommands := list("set", "lpush")
+
+  bulkCommands foreach(command,
+    newSlot(command, doString(
+      "method(bulkCommand(\"" .. command .. "\", call evalArgs))"
+    ))
+  )
+
   readReply := method(
     responseType  := socket readBytes(1)
     line          := socket readUntilSeq("\r\n")
@@ -44,33 +71,6 @@ Iodis := Object clone do(
     ) 
   )
 
-  bulkCommand := method(
-    args    := call evalArgs flatten
-    command := args removeFirst
-    stream  := args pop
-
-    data := list(args, stream size) flatten join(" ") .. "\r\n"
-    data = data .. stream
-    callCommand(command, data)
-  )
-
-  inlineCommands := list("flushdb", "exists", "del", "keys", "randomkey",
-    "rename", "renamenx", "dbsize", "expire", "expireat", "ttl", "get")
-
-  inlineCommands foreach(command,
-    newSlot(command, doString(
-      "method(callCommand(\"" .. command .. "\", call evalArgs))"
-    ))
-  )
-
-  bulkCommands := list("set", "lpush")
-
-  bulkCommands foreach(command,
-    newSlot(command, doString(
-      "method(bulkCommand(\"" .. command .. "\", call evalArgs))"
-    ))
-  )
-
   replyProcessor := Object clone do(
     Boolean   := block(r, r == 1)
 
@@ -82,4 +82,5 @@ Iodis := Object clone do(
     expireat  := Boolean
     ttl       := block(r, if(r < 0, nil, r))
   )
+
 )
