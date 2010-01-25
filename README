@@ -1,0 +1,26 @@
+iodis ~ a redis client library for io
+
+usage –
+  $ io
+  i := Iodis clone connect
+  i set("foo", "bar") ==> OK
+  i get("foo")        ==> bar
+  i rpush("jobs", "job1")
+  i rpush("jobs", "job2")
+  i lpop("jobs")      ==> job1
+
+tests ~
+  $ io tests/run.io
+
+beware ~
+  iodis doesn't handle server timeouts.
+  also, this is my first io code, suggestions
+  for improvements are more than welcome.
+
+credits ~
+  dekorte / io, antirez / redis
+  & ezmobius / redis-rb
+
+license ~
+  the mit. google it.
+  (c) 2010 harry vangberg <harry@vangberg.name>
