@@ -7,6 +7,8 @@ Iodis := Object clone do(
   port      ::= 6379
   password  ::= nil
 
+  ServerTimeout := Error clone
+
   connect := method(
     self socket := Socket clone setHost(host) setPort(port) connect
     if(password, callCommand("auth", password))
@@ -19,9 +21,36 @@ Iodis := Object clone do(
     raw       := formatCommand(command, args)
 
     if(debug, ("C: " .. raw) print)
-    socket streamWrite(raw)
-    replyProcessor perform(command) call(readReply)
+
+    socket write(raw)
+    responseProcessor perform(command) call(readResponse)
   )
+
+  readResponse := method(
+    response      := socket readUntilSeq("\r\n")
+    responseType  := response exSlice(0, 1)
+    line          := response exSlice(1)
+
+    responseType switch(
+      "+",  line,
+      ":",  line asNumber,
+      "$",  line asNumber compare(0) switch(
+                -1, nil,
+                 0, socket readBytes(2)
+                    "",
+                 1, data := socket readBytes(line asNumber)
+                    socket readBytes(2)
+                    data),
+      "*",  if (line asNumber < 0, nil,
+                values := list()
+                line asNumber repeat(
+                  values push(readResponse)
+                )
+                values),
+      "-", Exception raise("-" .. line)
+    ) 
+  )
+
 
   formatCommand := method(command, args,
     rawCommand  := command asUppercase
@@ -46,31 +75,6 @@ Iodis := Object clone do(
     if (inlineCommands    contains(command), return "inline")
     if (bulkCommands      contains(command), return "bulk")
     if (multiBulkCommands contains(command), return "multibulk")
-  )
-
-  readReply := method(
-    response      := socket readUntilSeq("\r\n")
-    responseType  := response exSlice(0, 1)
-    line          := response exSlice(1)
-
-    responseType switch(
-      "+",  line,
-      ":",  line asNumber,
-      "$",  line asNumber compare(0) switch(
-                -1, nil,
-                 0, socket readBytes(2)
-                    "",
-                 1, data := socket readBytes(line asNumber)
-                    socket readBytes(2)
-                    data),
-      "*",  if (line asNumber < 0, nil,
-                values := list()
-                line asNumber repeat(
-                  values push(readReply)
-                )
-                values),
-      "-", Exception raise("-" .. line)
-    ) 
   )
 
   inlineCommands := list(
@@ -111,7 +115,7 @@ Iodis := Object clone do(
     callCommand("type", key)
   )
 
-  replyProcessor := Object clone do(
+  responseProcessor := Object clone do(
     Boolean   := block(r, r == 1)
 
     flushdb   := Boolean
