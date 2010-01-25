@@ -3,11 +3,11 @@ iodis ~ a redis client library for io
 usage ~
   $ io
   i := Iodis clone connect
-  i set("foo", "bar") ==> OK
-  i get("foo")        ==> bar
-  i rpush("jobs", "job1")
-  i rpush("jobs", "job2")
-  i lpop("jobs")      ==> job1
+  i set("foo", "bar")               ==> OK
+  i get("foo")                      ==> bar
+  i rpush("jobs", "job1")           ==> OK
+  i rpush("jobs", "job2")           ==> OK
+  i lpop("jobs")                    ==> job1
 
 tests ~
   $ io tests/run.io
