@@ -1,7 +1,8 @@
 Iodis := Object clone do(
-  host  := "localhost"
-  port  := 6379
-  debug := false
+  version := "0.1"
+
+  host    := "localhost"
+  port    := 6379
 
   connect := method(
     self socket := Socket clone setHost(host) setPort(port) connect
@@ -9,18 +10,19 @@ Iodis := Object clone do(
   )
 
   callCommand := method(
-    args    := call evalArgs flatten
-    command := args removeFirst
+    args        := call evalArgs flatten
+    command     := args removeFirst
+    rawCommand  := command asUppercase
 
     if (inlineCommands contains(command)) then(
-      data := args prepend(command) join(" ") .. "\r\n"
+      data := args prepend(rawCommand) join(" ") .. "\r\n"
     ) elseif(bulkCommands contains(command)) then(
       stream := args pop
       args = args append(stream size) join(" ")
 
-      data := "#{command} #{args}\r\n#{stream}\r\n" interpolate
+      data := "#{rawCommand} #{args}\r\n#{stream}\r\n" interpolate
     ) elseif(multiBulkCommands contains(command)) then(
-      args prepend(command)
+      args prepend(rawCommand)
       bulk := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
 
       data := "*#{args size}\r\n#{bulk}" interpolate
