@@ -2,6 +2,7 @@ Iodis := Object clone do(
   version := "0.1"
 
   debug     ::= false
+
   host      ::= "localhost"
   port      ::= 6379
   password  ::= nil
@@ -95,7 +96,8 @@ Iodis := Object clone do(
                 line asNumber repeat(
                   values push(readReply)
                 )
-                values)
+                values),
+      "-", Exception raise("-" .. line)
     ) 
   )
 
