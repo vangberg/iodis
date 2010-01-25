@@ -8,8 +8,9 @@ Iodis := Object clone do(
     self
   )
 
-  callCommand := method(command, data,
-    data := list(command, data) flatten remove(nil) join(" ") .. "\r\n"
+  callCommand := method(command, args, stream,
+    data := list(command, args) flatten remove(nil) join(" ") .. "\r\n"
+    if(stream, data = data .. stream)
 
     if(debug, (list("S:", data, "\n") join(" ") print))
 
@@ -21,8 +22,20 @@ Iodis := Object clone do(
         reply)
   )
 
-  inlineCommands := list("flushdb", "exists", "del", "keys", "randomkey",
-    "rename", "renamenx", "dbsize", "expire", "expireat", "ttl", "get")
+  inlineCommands := list(
+    "exists", "del", "keys", "randomkey", "rename", "renamenx", "dbsize", 
+    "expire", "expireat", "ttl", "select", "move", "flushdb", "flushall",
+
+    "get", "mget"
+  )
+
+  bulkCommands := list(
+    "set", "getset", "setnx"
+  )
+
+  multiBulkCommands := list(
+    "mset"
+  )
 
   inlineCommands foreach(command,
     newSlot(command, doString(
@@ -35,16 +48,28 @@ Iodis := Object clone do(
     command := args removeFirst
     stream  := args pop
 
-    data := list(args, stream size) flatten join(" ") .. "\r\n"
-    data = data .. stream
-    callCommand(command, data)
-  )
+    args = list(args, stream size) flatten join(" ")
 
-  bulkCommands := list("set", "lpush")
+    callCommand(command, args, stream .. "\r\n")
+  )
 
   bulkCommands foreach(command,
     newSlot(command, doString(
       "method(bulkCommand(\"" .. command .. "\", call evalArgs))"
+    ))
+  )
+
+  multiBulkCommand := method(
+    args    := call evalArgs flatten
+    command := "*" .. args size
+    data    := args map(arg, "$#{arg size}\r\n#{arg}\r\n" interpolate) join
+
+    callCommand(command, nil, data)
+  )
+
+  multiBulkCommands foreach(command,
+    newSlot(command, doString(
+      "method(multiBulkCommand(\"" .. command .. "\", call evalArgs))"
     ))
   )
 
@@ -81,6 +106,8 @@ Iodis := Object clone do(
     expire    := Boolean
     expireat  := Boolean
     ttl       := block(r, if(r < 0, nil, r))
+    move      := Boolean
+    setnx     := Boolean
   )
 
 )

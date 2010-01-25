@@ -1,7 +1,7 @@
 IodisTest := UnitTest clone do(
   setUp := method(
     self redis := Iodis clone connect
-    redis flushdb
+    redis flushall
   )
   
   testExists := method(
@@ -75,5 +75,55 @@ IodisTest := UnitTest clone do(
     redis set("foo", "bar")
     redis expire("foo", 1000)
     assertTrue(redis ttl("foo") > 0)
+  )
+
+  testMove := method(
+    redis select(0)
+    assertFalse(redis move("foo", 1))
+
+    redis set("foo", "bar")
+    assertTrue(redis move("foo", 1))
+  )
+
+  testSet := method(
+    redis set("foo", "bar")
+    assertEquals("bar", redis get("foo"))
+  )
+
+  testGet := method(
+    assertNil(redis get("nonexisting"))
+
+    redis set("foo", "bar")
+    assertEquals("bar", redis get("foo"))
+  )
+
+  testGetSet := method(
+    redis set("foo", "bar")
+
+    assertEquals("bar", redis getset("foo", "new value"))
+    assertEquals("new value", redis get("foo"))
+  )
+
+  testMget := method(
+    redis set("foo", "bar")
+    redis set("other", "value")
+
+    r := redis mget("foo", "other", "third")
+    assertTrue(r containsAll(list("bar", "value", nil)))
+  )
+
+  testSetnx := method(
+    assertTrue(redis setnx("foo", "first value"))
+
+    redis set("otherkey", "value")
+    assertFalse(redis setnx("otherkey", "new value"))
+  )
+
+  testMset := method(
+    redis set("key1", "first value")
+    redis mset("key1", "new value", "key2", "some value")
+
+    assertEquals("new value", redis get("key1"))
+    assertEquals("some value", redis get("key2"))
   )
 )
