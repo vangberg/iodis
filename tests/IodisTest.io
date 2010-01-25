@@ -22,6 +22,17 @@ IodisTest := UnitTest clone do(
     assertEquals(2, redis del("some", "other"))
   )
 
+  testDoNotOverrideType := method(
+    assertEquals("Iodis", redis type)
+  )
+
+  testTypeOf := method(
+    redis set("foo", "bar")
+    assertEquals("string", redis typeOf("foo"))
+    redis del("foo")
+    assertEquals("none", redis typeOf("foo"))
+  )
+
   testKeys := method(
     redis set("foo1", "yay")
     redis set("foo2", "woah")
@@ -150,5 +161,108 @@ IodisTest := UnitTest clone do(
   testDecrBy := method(
     redis set("counter", 5)
     assertEquals(1, redis decrby("counter", 4))
+  )
+
+  testRpush := method(
+    redis rpush("jobs", "some_job")
+    assertEquals("list", redis typeOf("jobs"))
+    assertEquals(1, redis llen("jobs"))
+  )
+
+  testLpush := method(
+    redis lpush("jobs", "some_job")
+    assertEquals("list", redis typeOf("jobs"))
+    assertEquals(1, redis llen("jobs"))
+  )
+
+  testLLen := method(
+    redis lpush("jobs", "some_job")
+    redis lpush("jobs", "other")
+    assertEquals(2, redis llen("jobs"))
+  )
+
+  testLrange := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    redis rpush("jobs", "job3")
+    redis rpush("jobs", "job4")
+    assertEquals(
+      list("job2", "job3", "job4"),
+      redis lrange("jobs", 1, -1)
+    )
+  )
+
+  testLtrim := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    redis rpush("jobs", "job3")
+    redis rpush("jobs", "job4")
+    redis ltrim("jobs", 1, 2)
+    assertEquals(
+      list("job2", "job3"),
+      redis lrange("jobs", 0, -1)
+    )
+  )
+
+  testLindex := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    redis rpush("jobs", "job3")
+    assertEquals("job2", redis lindex("jobs", 1))
+  )
+
+  testLset := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    redis rpush("jobs", "job3")
+    redis lset("jobs", 1, "new job")
+    assertEquals("new job", redis lindex("jobs", 1))
+  )
+
+  testLrem := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    redis rpush("jobs", "job1")
+
+    assertEquals(2, redis lrem("jobs", 2, "job1"))
+    assertEquals(1, redis llen("jobs"))
+  )
+
+  testLpop := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    assertEquals("job1", redis lpop("jobs"))
+  )
+
+  testRpop := method(
+    redis rpush("jobs", "job1")
+    redis rpush("jobs", "job2")
+    assertEquals("job2", redis rpop("jobs"))
+  )
+
+  testBlpop := method(
+    redis rpush("jobs", "job1")
+    assertEquals(
+      list("jobs", "job1"),
+      redis blpop("jobs", "queue1")
+    )
+  )
+
+  testBrpop := method(
+    redis rpush("jobs", "job1")
+    assertEquals(
+      list("jobs", "job1"),
+      redis brpop("jobs", "queue1")
+    )
+  )
+
+  testRpoplpush := method(
+    redis lpush("new-jobs", "job1")
+    redis lpush("new-jobs", "job2")
+    assertEquals(
+      "job1",
+      redis rpoplpush("new-jobs", "ongoing-jobs")
+    )
+    assertEquals("job1", redis rpop("ongoing-jobs"))
   )
 )

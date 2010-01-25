@@ -34,14 +34,20 @@ Iodis := Object clone do(
   )
 
   inlineCommands := list(
-    "exists", "del", "keys", "randomkey", "rename", "renamenx", "dbsize", 
-    "expire", "expireat", "ttl", "select", "move", "flushdb", "flushall",
+    "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
+    "dbsize", "expire", "expireat", "ttl", "select", "move", "flushdb",
+    "flushall",
 
-    "get", "mget", "incr", "incrby", "decr", "decrby"
+    "get", "mget", "incr", "incrby", "decr", "decrby",
+
+    "lrange", "llen", "ltrim", "lindex", "lpop", "rpop", "blpop", "brpop",
+    "rpoplpush"
   )
 
   bulkCommands := list(
-    "set", "getset", "setnx"
+    "set", "getset", "setnx",
+
+    "rpush", "lpush", "lset", "lrem"
   )
 
   multiBulkCommands := list(
@@ -49,9 +55,14 @@ Iodis := Object clone do(
   )
 
   list(inlineCommands, bulkCommands, multiBulkCommands) flatten foreach(command,
-    newSlot(command, doString(
-      "method(callCommand(\"" .. command .. "\", call evalArgs))"
-    ))
+    if(hasSlot(command) != true,
+      newSlot(command, doString(
+        "method(callCommand(\"" .. command .. "\", call evalArgs))"
+      )))
+  )
+
+  typeOf := method(key,
+    callCommand("type", key)
   )
 
   readReply := method(
@@ -91,6 +102,7 @@ Iodis := Object clone do(
     setnx     := Boolean
     msetnx    := Boolean
 
+    type      := block(r, r)
     forward := method(block(r, r))
   )
 )
