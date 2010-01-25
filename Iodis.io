@@ -100,10 +100,11 @@ Iodis := Object clone do(
   )
 
   list(inlineCommands, bulkCommands, multiBulkCommands) flatten foreach(command,
-    if(hasSlot(command) != true,
-      newSlot(command, doString(
-        "method(callCommand(\"" .. command .. "\", call evalArgs))"
-      )))
+    if(hasSlot(command), continue)
+
+    newSlot(command, doString(
+      "method(callCommand(\"" .. command .. "\", call evalArgs))"
+    ))
   )
 
   typeOf := method(key,
