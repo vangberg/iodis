@@ -265,4 +265,153 @@ IodisTest := UnitTest clone do(
     )
     assertEquals("job1", redis rpop("ongoing-jobs"))
   )
+
+  testSadd := method(
+    assertTrue(redis sadd("servers", "srv1"))
+    assertFalse(redis sadd("servers", "srv1"))
+    assertTrue(redis sadd("servers", "srv2"))
+
+    assertEquals("set", redis typeOf("servers"))
+    assertEquals(2, redis scard("servers"))
+  )
+
+  testSrem := method(
+    redis sadd("servers", "srv1")
+    redis sadd("servers", "srv2")
+
+    assertTrue(redis srem("servers", "srv1"))
+    assertFalse(redis srem("servers", "srv1"))
+
+    assertEquals(1, redis scard("servers"))
+  )
+
+  testSpop := method(
+    redis sadd("servers", "srv1")
+    redis sadd("servers", "srv2")
+
+    assertNotNil(redis spop("servers"))
+    assertEquals(1, redis scard("servers"))
+
+    assertNil(redis spop("non-existing"))
+  )
+
+  testSmove := method(
+    redis sadd("servers", "srv1")
+    redis sadd("servers", "srv2")
+
+    assertTrue(redis smove("servers", "new-servers", "srv2"))
+    assertEquals("set", redis typeOf("new-servers"))
+
+    assertFalse(redis smove("servers", "new-servers", "no-srv"))
+  )
+
+  testScard := method(
+    redis sadd("servers", "srv1")
+    redis sadd("servers", "srv2")
+    assertEquals(2, redis scard("servers"))
+  )
+
+  testSismember := method(
+    redis sadd("servers", "srv1")
+    assertTrue(redis sismember("servers", "srv1"))
+    assertFalse(redis sismember("servers", "srv2"))
+  )
+
+  testSinter := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("web", "srv3")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    members := redis sinter("web", "ftp")
+
+    assertEquals(2, members size)
+    assertTrue(list("srv1", "srv3") containsAll(members))
+  )
+
+  testSinterstore := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("web", "srv3")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    redis sinterstore("common", "web", "ftp")
+
+    assertEquals(2, redis scard("common"))
+    assertTrue(list("srv1", "srv3") containsAll(
+      redis smembers("common")
+    ))
+  )
+
+  testSunion := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    members := redis sunion("web", "ftp")
+
+    assertEquals(3, members size)
+    assertTrue(
+      list("srv1", "srv2", "srv3") containsAll(members)
+    )
+  )
+
+  testSunion := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    members := redis sunionstore("all", "web", "ftp")
+
+    assertEquals(3, redis scard("all"))
+    assertTrue(list("srv1", "srv2", "srv3") containsAll(
+      redis smembers("all")
+    ))
+  )
+
+  testSdiff := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    assertEquals(
+      list("srv2"),
+      redis sdiff("web", "ftp")
+    )
+  )
+
+  testSdiffstore := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+    redis sadd("ftp", "srv1")
+    redis sadd("ftp", "srv3")
+
+    redis sdiffstore("diff", "web", "ftp")
+    assertEquals(list("srv2"), redis smembers("diff"))
+  )
+
+  testSmembers := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+
+    assertEquals(
+      list("srv1", "srv2"),
+      redis smembers("web") sort
+    )
+  )
+
+  testSrandmember := method(
+    redis sadd("web", "srv1")
+    redis sadd("web", "srv2")
+
+    member := redis srandmember("web")
+    assertTrue(list("srv1", "srv2") contains(member))
+
+    assertEquals(2, redis scard("web"))
+  )
 )

@@ -41,13 +41,18 @@ Iodis := Object clone do(
     "get", "mget", "incr", "incrby", "decr", "decrby",
 
     "lrange", "llen", "ltrim", "lindex", "lpop", "rpop", "blpop", "brpop",
-    "rpoplpush"
+    "rpoplpush",
+
+    "spop", "scard", "sinter", "sinterstore", "sunion", "sunionstore",
+    "sdiff", "sdiffstore", "smembers", "srandmember"
   )
 
   bulkCommands := list(
     "set", "getset", "setnx",
 
-    "rpush", "lpush", "lset", "lrem"
+    "rpush", "lpush", "lset", "lrem",
+
+    "sadd", "srem", "smove", "sismember"
   )
 
   multiBulkCommands := list(
@@ -101,6 +106,10 @@ Iodis := Object clone do(
     move      := Boolean
     setnx     := Boolean
     msetnx    := Boolean
+    sadd      := Boolean
+    srem      := Boolean
+    smove     := Boolean
+    sismember := Boolean
 
     type      := block(r, r)
     forward := method(block(r, r))
