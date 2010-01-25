@@ -40,19 +40,19 @@ IodisTest := UnitTest clone do(
     assertFalse(redis exists("some"))
   )
 
-  testRenameNx := method(
+  testRenamenx := method(
     redis set("foo", "value")
     redis set("bar", "other value")
 
-    assertFalse(redis renameNx("foo", "bar"))
-    assertTrue(redis renameNx("foo", "newKey"))
+    assertFalse(redis renamenx("foo", "bar"))
+    assertTrue(redis renamenx("foo", "newKey"))
   )
 
-  testDbSize := method(
+  testDbsize := method(
     redis set("foo", "bar")
     redis set("lol", "cat")
 
-    assertEquals(2, redis dbSize)
+    assertEquals(2, redis dbsize)
   )
 
   testExpire := method(
@@ -62,11 +62,11 @@ IodisTest := UnitTest clone do(
     assertFalse(redis expire("foo", 123))
   )
 
-  testExpireAt := method(
+  testExpireat := method(
     redis set("foo", "bar")
 
-    assertTrue(redis expireAt("foo", 2123456789))
-    assertFalse(redis expireAt("foo", 2123456789))
+    assertTrue(redis expireat("foo", 2123456789))
+    assertFalse(redis expireat("foo", 2123456789))
   )
 
   testTtl := method(

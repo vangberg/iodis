@@ -8,10 +8,17 @@ Iodis := Object clone do(
     self
   )
 
-  writeData := method(data,
-    if(debug, ("S: " .. data) print)
+  callCommand := method(command, data,
+    data := list(command, data) flatten remove(nil) join(" ") .. "\r\n"
+
+    if(debug, (list("S:", data, "\n") join(" ") print))
+
     socket streamWrite(data)
-    readReply
+
+    reply := readReply
+    if (replyProcessor hasSlot(command),
+        replyProcessor getSlot(command) call(reply),
+        reply)
   )
 
   readReply := method(
@@ -21,10 +28,13 @@ Iodis := Object clone do(
     responseType switch(
       "+",  line,
       ":",  line asNumber,
-      "$",  if (line asNumber < 0, nil,
-                data := socket readBytes(line asNumber)
-                socket readBytes(2)
-                data),
+      "$",  line asNumber compare(0) switch(
+                -1, nil,
+                 0, socket readBytes(2)
+                    "",
+                 1, data := socket readBytes(line asNumber)
+                    socket readBytes(2)
+                    data),
       "*",  if (line asNumber < 0, nil,
                 values := list()
                 line asNumber repeat(
@@ -34,75 +44,42 @@ Iodis := Object clone do(
     ) 
   )
 
-  inlineCommand := method(command, args,
-    data := list(command, args) remove(nil) flatten join(" ") .. "\r\n"
-    writeData(data)
+  bulkCommand := method(
+    args    := call evalArgs flatten
+    command := args removeFirst
+    stream  := args pop
+
+    data := list(args, stream size) flatten join(" ") .. "\r\n"
+    data = data .. stream
+    callCommand(command, data)
   )
 
-  bulkCommand := method(command, args, stream,
-    data := list(command, args, stream size) flatten join(" ") .. "\r\n"
-    data = data .. stream .. "\r\n"
-    writeData(data)
+  inlineCommands := list("flushdb", "exists", "del", "keys", "randomkey",
+    "rename", "renamenx", "dbsize", "expire", "expireat", "ttl", "get")
+
+  inlineCommands foreach(command,
+    newSlot(command, doString(
+      "method(callCommand(\"" .. command .. "\", call evalArgs))"
+    ))
   )
 
-  flushdb := method(inlineCommand("FLUSHDB"))
+  bulkCommands := list("set", "lpush")
 
-  exists := method(key,
-    r := inlineCommand("EXISTS", key)
-    if(r == 1, true, false)
+  bulkCommands foreach(command,
+    newSlot(command, doString(
+      "method(bulkCommand(\"" .. command .. "\", call evalArgs))"
+    ))
   )
 
-  del := method(
-    inlineCommand("DEL", call evalArgs)
-  )
+  replyProcessor := Object clone do(
+    Boolean   := block(r, r == 1)
 
-  keys := method(pattern,
-    inlineCommand("KEYS", pattern) split(" ")
+    flushdb   := Boolean
+    exists    := Boolean
+    keys      := block(r, r split(" "))
+    renamenx  := Boolean
+    expire    := Boolean
+    expireat  := Boolean
+    ttl       := block(r, if(r < 0, nil, r))
   )
-
-  randomKey := method(
-    inlineCommand("RANDOMKEY")
-  )
-
-  rename := method(old, new,
-    inlineCommand("RENAME", list(old, new))
-  )
-
-  renameNx := method(old, new,
-    r := inlineCommand("RENAMENX", list(old, new))
-    if(r == 1, true, false)
-  )
-
-  dbSize := method(
-    inlineCommand("DBSIZE")
-  )
-  
-  expire := method(key, seconds,
-    r := inlineCommand("EXPIRE", list(key, seconds))
-    if(r == 1, true, false)
-  )
-
-  expireAt := method(key, unix,
-    r := inlineCommand("EXPIREAT", list(key, unix))
-    if(r == 1, true, false)
-  )
-
-  ttl := method(key,
-    r := inlineCommand("TTL", key)
-    if(r < 0, nil, r)
-  )
-
-  set := method(key, value, bulkCommand("SET", key, value)) 
-  get := method(key, inlineCommand("GET", key))
-  mget := method(keys, inlineCommand("MGET", keys))
-  incr := method(key, inlineCommand("INCR", key))
-  decr := method(key, inlineCommand("DECR", key))
-
-  lpush := method(key, value, bulkCommand("RPUSH", key, value))
-  lrange := method(key, start, last,
-    inlineCommand("LRANGE", list(key, start, last))
-  )
-  rpop := method(key, inlineCommand("RPOP", key))
-
-  ping := method(inlineCommand("PING"))
 )
