@@ -1,11 +1,15 @@
 Iodis := Object clone do(
   version := "0.1"
 
-  host    := "localhost"
-  port    := 6379
+  debug     ::= false
+  host      ::= "localhost"
+  port      ::= 6379
+  password  ::= nil
 
   connect := method(
     self socket := Socket clone setHost(host) setPort(port) connect
+    if(password,
+      callCommand("auth", password))
     self
   )
 
@@ -28,13 +32,15 @@ Iodis := Object clone do(
       data := "*#{args size}\r\n#{bulk}" interpolate
     )
 
+    if(debug, ("C: " .. data) print)
+
     socket streamWrite(data)
 
     replyProcessor perform(command) call(readReply)
   )
 
   inlineCommands := list(
-    "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
+    "auth", "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
     "dbsize", "expire", "expireat", "ttl", "select", "move", "flushdb",
     "flushall",
 
