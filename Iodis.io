@@ -11,6 +11,7 @@ Iodis := Object clone do(
 
   connect := method(
     self socket := Socket clone setHost(host) setPort(port) connect
+    if(socket isError, writeln("Error connection to Redis."); exit)
     if(password, callCommand("auth", password))
     self
   )
