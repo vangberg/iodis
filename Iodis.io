@@ -22,9 +22,10 @@ Iodis := Object clone do(
     request   := multiBulkRequest(command, args)
 
     if(debug, ("C: " .. request) print)
-
     socket write(request)
-    responseProcessor perform(command) call(readResponse)
+
+    processor := responseProcessor perform(command)
+    processor call(readResponse)
   )
 
   multiBulkRequest := method(command, args,
