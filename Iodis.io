@@ -43,6 +43,7 @@ Iodis := Object clone do(
 
   readResponse := method(
     response      := socket readUntilSeq("\r\n")
+    if(response isError, Exception raise("Error reading response. Quitting."))
     responseType  := response exSlice(0, 1)
     line          := response exSlice(1)
 
