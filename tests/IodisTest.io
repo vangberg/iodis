@@ -414,4 +414,72 @@ IodisTest := UnitTest clone do(
 
     assertEquals(2, redis scard("web"))
   )
+
+  testZaddAndZscore := method(
+    assertTrue(redis zadd("records", 1959, "giant steps"))
+    assertFalse(redis zadd("records", 1959, "giant steps"))
+
+    assertEquals(1959, redis zscore("records", "giant steps"))
+  )
+
+  testZrem := method(
+    redis zadd("records", 1959, "giant steps")
+    redis zadd("records", 1964, "a love supreme")
+
+    assertTrue(redis zrem("records", "giant steps"))
+    assertEquals(1, redis zcard("records"))
+    assertFalse(redis zrem("records", "hub cap"))
+  )
+
+  testZincrby := method(
+    redis zadd("records", 1950, "giant steps")
+    redis zincrby("records", 9, "giant steps")
+
+    assertEquals(1959, redis zscore("records", "giant steps"))
+  )
+
+  testZrank := method(
+    redis zadd("records", 1959, "giant steps")
+    redis zadd("records", 1964, "a love supreme")
+
+    assertEquals(0, redis zrank("records", "giant steps"))
+    assertEquals(1, redis zrank("records", "a love supreme"))
+  )
+
+  testZrevrank := method(
+    redis zadd("records", 1959, "giant steps")
+    redis zadd("records", 1964, "a love supreme")
+
+    assertEquals(1, redis zrevrank("records", "giant steps"))
+    assertEquals(0, redis zrevrank("records", "a love supreme"))
+  )
+
+  testZrange := method(
+    redis zadd("records", 1957, "blue train")
+    redis zadd("records", 1959, "giant steps")
+    redis zadd("records", 1964, "a love supreme")
+
+    assertEquals(
+      list("blue train", "giant steps"),
+      redis zrange("records", 0, 1)
+    )
+  )
+
+  testZrevrange := method(
+    redis zadd("records", 1957, "blue train")
+    redis zadd("records", 1959, "giant steps")
+    redis zadd("records", 1964, "a love supreme")
+
+    assertEquals(
+      list("a love supreme", "giant steps"),
+      redis zrevrange("records", 0, 1)
+    )
+  )
+
+  testZcard := method(
+    redis zadd("records", 1959, "giant steps")
+
+    assertEquals(0, redis zcard("singles"))
+    assertEquals(1, redis zcard("records"))
+  )
 )

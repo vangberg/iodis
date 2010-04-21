@@ -87,6 +87,9 @@ Iodis := Object clone do(
 
     "sadd", "srem", "smove", "sismember",
 
+    "zadd", "zscore", "zrem", "zincrby", "zrank", "zrevrank", "zcard",
+    "zrange", "zrevrange",
+
     "mset", "msetnx"
   )
 
@@ -106,10 +109,10 @@ Iodis := Object clone do(
 
   responseProcessor := Object clone do(
     Boolean   := block(r, r == 1)
+    Integer   := block(r, r asNumber)
 
     flushdb   := Boolean
     exists    := Boolean
-    keys      := block(r, r split(" "))
     renamenx  := Boolean
     expire    := Boolean
     expireat  := Boolean
@@ -122,6 +125,13 @@ Iodis := Object clone do(
     smove     := Boolean
     sismember := Boolean
     type      := block(r, r)
+    zadd      := Boolean
+    zscore    := Integer
+    zrem      := Boolean
+    zincrby   := Integer
+    zcard     := Integer
+    zrank     := Integer
+    zrevrank  := Integer
 
     forward   := block(r, r)
   )
