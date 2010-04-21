@@ -19,12 +19,26 @@ Iodis := Object clone do(
   callCommand := method(
     args      := call evalArgs flatten
     command   := args removeFirst
-    raw       := formatCommand(command, args)
+    request   := multiBulkRequest(command, args)
 
-    if(debug, ("C: " .. raw) print)
+    if(debug, ("C: " .. request) print)
 
-    socket write(raw)
+    socket write(request)
     responseProcessor perform(command) call(readResponse)
+  )
+
+  multiBulkRequest := method(command, args,
+    args prepend(command asUppercase)
+
+    request := ("*" .. args size .. "\r\n") asMutable
+
+    args foreach(arg,
+      bytes := arg asString size
+      request appendSeq("$" .. bytes .. "\r\n")
+      request appendSeq(arg .. "\r\n")
+    )
+
+    request
   )
 
   readResponse := method(
@@ -50,17 +64,6 @@ Iodis := Object clone do(
                 values),
       "-", Exception raise("-" .. line)
     ) 
-  )
-
-
-  formatCommand := method(command, args,
-    rawCommand  := command asUppercase
-
-    args prepend(rawCommand)
-    bulk := args map(arg,
-      "$#{arg asString size}\r\n#{arg}\r\n" interpolate
-    ) join
-    "*#{args size}\r\n#{bulk}" interpolate
   )
 
   commands := list(
@@ -93,6 +96,8 @@ Iodis := Object clone do(
     ))
   )
 
+  # We don't want to override Io's `type`, so the Redis-command `type` is
+  # wrapped in this method instead.
   typeOf := method(key,
     callCommand("type", key)
   )
