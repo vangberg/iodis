@@ -1,0 +1,6 @@
+All these Redis commands need a helper string, each, wouldn't that be quite
+useful? I was thinking of pairs of commandName and commandDocString and then
+when we do newSlot, we could do some more there. Munging
+http://code.google.com/p/redis/wiki/CommandReference could be one way of
+getting docstrings. Using xpath $x("//td[@id='wikimaincol']//li") gets one
+quite far.
