@@ -56,29 +56,14 @@ Iodis := Object clone do(
   formatCommand := method(command, args,
     rawCommand  := command asUppercase
 
-    commandType(command) switch(
-      "inline",
-        rawCommand .. " " .. args join(" ") .. "\r\n",
-      "bulk", 
-        stream  := args pop asString
-        args    := args join(" ")
-        "#{rawCommand} #{args} #{stream size}\r\n#{stream}\r\n" interpolate,
-      "multibulk",
-        args prepend(rawCommand)
-        bulk := args map(arg,
-          "$#{arg size}\r\n#{arg}\r\n" interpolate
-        ) join
-        "*#{args size}\r\n#{bulk}" interpolate
-    )
+    args prepend(rawCommand)
+    bulk := args map(arg,
+      "$#{arg asString size}\r\n#{arg}\r\n" interpolate
+    ) join
+    "*#{args size}\r\n#{bulk}" interpolate
   )
 
-  commandType := method(command,
-    if (inlineCommands    contains(command), return "inline")
-    if (bulkCommands      contains(command), return "bulk")
-    if (multiBulkCommands contains(command), return "multibulk")
-  )
-
-  inlineCommands := list(
+  commands := list(
     "auth", "exists", "del", "type", "keys", "randomkey", "rename", "renamenx",
     "dbsize", "expire", "expireat", "ttl", "select", "move", "flushdb",
     "flushall", "quit",
@@ -89,22 +74,18 @@ Iodis := Object clone do(
     "rpoplpush",
 
     "spop", "scard", "sinter", "sinterstore", "sunion", "sunionstore",
-    "sdiff", "sdiffstore", "smembers", "srandmember"
-  )
+    "sdiff", "sdiffstore", "smembers", "srandmember",
 
-  bulkCommands := list(
     "set", "getset", "setnx",
 
     "rpush", "lpush", "lset", "lrem",
 
-    "sadd", "srem", "smove", "sismember"
-  )
+    "sadd", "srem", "smove", "sismember",
 
-  multiBulkCommands := list(
     "mset", "msetnx"
   )
 
-  list(inlineCommands, bulkCommands, multiBulkCommands) flatten foreach(command,
+  commands foreach(command,
     if(hasSlot(command), continue)
 
     newSlot(command, method(
